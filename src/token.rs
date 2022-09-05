@@ -4,6 +4,7 @@ use serde::{de::DeserializeOwned, Serialize};
 use crate::claims::*;
 use crate::common::*;
 use crate::error::*;
+use crate::jwk::Jwk;
 use crate::jwt_header::*;
 
 pub const MAX_HEADER_LENGTH: usize = 8192;
@@ -65,8 +66,8 @@ impl TokenMetadata {
     /// This information should not be trusted: it is unprotected and can be
     /// freely modified by a third party. At the bare minimum, you should
     /// check that it's in a set of public keys you already trust.
-    pub fn public_key(&self) -> Option<&str> {
-        self.jwt_header.public_key.as_deref()
+    pub fn public_key(&self) -> Option<&Jwk> {
+        self.jwt_header.public_key.as_ref()
     }
 
     /// The certificate URL for this token ("x5u")

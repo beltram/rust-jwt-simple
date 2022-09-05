@@ -1,6 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 use crate::common::*;
+use crate::jwk::Jwk;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JWTHeader {
@@ -26,7 +27,7 @@ pub struct JWTHeader {
     pub key_set_url: Option<String>,
 
     #[serde(rename = "jwk", default, skip_serializing_if = "Option::is_none")]
-    pub public_key: Option<String>,
+    pub public_key: Option<Jwk>,
 
     #[serde(rename = "x5u", default, skip_serializing_if = "Option::is_none")]
     pub certificate_url: Option<String>,
