@@ -307,6 +307,7 @@ pub mod common;
 #[cfg(feature = "cwt")]
 pub mod cwt_token;
 pub mod token;
+mod jwk;
 
 mod jwt_header;
 mod serde_additions;
@@ -341,6 +342,7 @@ pub mod prelude {
     pub use crate::cwt_token::*;
     pub use crate::token::*;
     pub use crate::jwt_header::JWTHeader;
+    pub use crate::jwk::*;
 
     mod hashset_from_strings {
         use std::collections::HashSet;
