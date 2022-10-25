@@ -1,13 +1,16 @@
+use std::mem;
+
 use ct_codecs::{Base64UrlSafeNoPadding, Encoder};
 use hmac_sha1_compact::Hash as SHA1;
 use hmac_sha256::Hash as SHA256;
-use hmac_sha512::sha384 as hmac_sha384;
+use hmac_sha512::sha384::Hash as SHA384;
+use hmac_sha512::Hash as SHA512;
 use rsa::pkcs1::{DecodeRsaPrivateKey as _, DecodeRsaPublicKey};
 use rsa::pkcs8::{DecodePrivateKey as _, DecodePublicKey as _, EncodePrivateKey as _};
 use rsa::{BigUint, PublicKey as _, PublicKeyParts as _};
 use serde::{de::DeserializeOwned, Serialize};
 #[allow(unused_imports)]
-use spki05::{DecodePublicKey as _, EncodePublicKey as _};
+use spki::{DecodePublicKey as _, EncodePublicKey as _};
 
 use crate::claims::*;
 use crate::common::*;
@@ -114,7 +117,7 @@ impl RSAKeyPair {
         self.rsa_sk
             .to_pkcs8_der()
             .map_err(Into::into)
-            .map(|x| x.as_ref().to_vec())
+            .map(|x| mem::take(x.to_bytes().as_mut()))
     }
 
     pub fn to_pem(&self) -> Result<String, Error> {
@@ -263,11 +266,11 @@ impl RSAKeyPairLike for RS256KeyPair {
     }
 
     fn hash(message: &[u8]) -> Vec<u8> {
-        hmac_sha256::Hash::hash(message).to_vec()
+        SHA256::hash(message).to_vec()
     }
 
     fn padding_scheme(&self) -> rsa::PaddingScheme {
-        rsa::PaddingScheme::new_pkcs1v15_sign(Some(rsa::Hash::SHA2_256))
+        rsa::PaddingScheme::new_pkcs1v15_sign::<SHA256>()
     }
 }
 
@@ -320,11 +323,11 @@ impl RSAPublicKeyLike for RS256PublicKey {
     }
 
     fn hash(message: &[u8]) -> Vec<u8> {
-        hmac_sha256::Hash::hash(message).to_vec()
+        SHA256::hash(message).to_vec()
     }
 
     fn padding_scheme(&self) -> rsa::PaddingScheme {
-        rsa::PaddingScheme::new_pkcs1v15_sign(Some(rsa::Hash::SHA2_256))
+        rsa::PaddingScheme::new_pkcs1v15_sign::<SHA256>()
     }
 
     fn public_key(&self) -> &RSAPublicKey {
@@ -425,11 +428,11 @@ impl RSAKeyPairLike for RS512KeyPair {
     }
 
     fn hash(message: &[u8]) -> Vec<u8> {
-        hmac_sha512::Hash::hash(message).to_vec()
+        SHA512::hash(message).to_vec()
     }
 
     fn padding_scheme(&self) -> rsa::PaddingScheme {
-        rsa::PaddingScheme::new_pkcs1v15_sign(Some(rsa::Hash::SHA2_512))
+        rsa::PaddingScheme::new_pkcs1v15_sign::<SHA512>()
     }
 }
 
@@ -482,11 +485,11 @@ impl RSAPublicKeyLike for RS512PublicKey {
     }
 
     fn hash(message: &[u8]) -> Vec<u8> {
-        hmac_sha512::Hash::hash(message).to_vec()
+        SHA512::hash(message).to_vec()
     }
 
     fn padding_scheme(&self) -> rsa::PaddingScheme {
-        rsa::PaddingScheme::new_pkcs1v15_sign(Some(rsa::Hash::SHA2_512))
+        rsa::PaddingScheme::new_pkcs1v15_sign::<SHA512>()
     }
 
     fn public_key(&self) -> &RSAPublicKey {
@@ -587,11 +590,11 @@ impl RSAKeyPairLike for RS384KeyPair {
     }
 
     fn hash(message: &[u8]) -> Vec<u8> {
-        hmac_sha384::Hash::hash(message).to_vec()
+        SHA384::hash(message).to_vec()
     }
 
     fn padding_scheme(&self) -> rsa::PaddingScheme {
-        rsa::PaddingScheme::new_pkcs1v15_sign(Some(rsa::Hash::SHA2_384))
+        rsa::PaddingScheme::new_pkcs1v15_sign::<SHA384>()
     }
 }
 
@@ -644,11 +647,11 @@ impl RSAPublicKeyLike for RS384PublicKey {
     }
 
     fn hash(message: &[u8]) -> Vec<u8> {
-        hmac_sha384::Hash::hash(message).to_vec()
+        SHA384::hash(message).to_vec()
     }
 
     fn padding_scheme(&self) -> rsa::PaddingScheme {
-        rsa::PaddingScheme::new_pkcs1v15_sign(Some(rsa::Hash::SHA2_384))
+        rsa::PaddingScheme::new_pkcs1v15_sign::<SHA384>()
     }
 
     fn public_key(&self) -> &RSAPublicKey {
@@ -749,11 +752,11 @@ impl RSAKeyPairLike for PS256KeyPair {
     }
 
     fn hash(message: &[u8]) -> Vec<u8> {
-        hmac_sha256::Hash::hash(message).to_vec()
+        SHA256::hash(message).to_vec()
     }
 
     fn padding_scheme(&self) -> rsa::PaddingScheme {
-        rsa::PaddingScheme::new_pss::<hmac_sha256::Hash, _>(rand::thread_rng())
+        rsa::PaddingScheme::new_pss::<SHA256>()
     }
 }
 
@@ -806,11 +809,11 @@ impl RSAPublicKeyLike for PS256PublicKey {
     }
 
     fn hash(message: &[u8]) -> Vec<u8> {
-        hmac_sha256::Hash::hash(message).to_vec()
+        SHA256::hash(message).to_vec()
     }
 
     fn padding_scheme(&self) -> rsa::PaddingScheme {
-        rsa::PaddingScheme::new_pss::<hmac_sha256::Hash, _>(rand::thread_rng())
+        rsa::PaddingScheme::new_pss::<SHA256>()
     }
 
     fn public_key(&self) -> &RSAPublicKey {
@@ -903,11 +906,11 @@ impl RSAKeyPairLike for PS512KeyPair {
     }
 
     fn hash(message: &[u8]) -> Vec<u8> {
-        hmac_sha512::Hash::hash(message).to_vec()
+        SHA512::hash(message).to_vec()
     }
 
     fn padding_scheme(&self) -> rsa::PaddingScheme {
-        rsa::PaddingScheme::new_pss::<hmac_sha512::Hash, _>(rand::thread_rng())
+        rsa::PaddingScheme::new_pss::<SHA512>()
     }
 }
 
@@ -960,11 +963,11 @@ impl RSAPublicKeyLike for PS512PublicKey {
     }
 
     fn hash(message: &[u8]) -> Vec<u8> {
-        hmac_sha512::Hash::hash(message).to_vec()
+        SHA512::hash(message).to_vec()
     }
 
     fn padding_scheme(&self) -> rsa::PaddingScheme {
-        rsa::PaddingScheme::new_pss::<hmac_sha512::Hash, _>(rand::thread_rng())
+        rsa::PaddingScheme::new_pss::<SHA512>()
     }
 
     fn public_key(&self) -> &RSAPublicKey {
@@ -1065,11 +1068,11 @@ impl RSAKeyPairLike for PS384KeyPair {
     }
 
     fn hash(message: &[u8]) -> Vec<u8> {
-        hmac_sha384::Hash::hash(message).to_vec()
+        SHA384::hash(message).to_vec()
     }
 
     fn padding_scheme(&self) -> rsa::PaddingScheme {
-        rsa::PaddingScheme::new_pss::<hmac_sha384::Hash, _>(rand::thread_rng())
+        rsa::PaddingScheme::new_pss::<SHA384>()
     }
 }
 
@@ -1122,11 +1125,11 @@ impl RSAPublicKeyLike for PS384PublicKey {
     }
 
     fn hash(message: &[u8]) -> Vec<u8> {
-        hmac_sha384::Hash::hash(message).to_vec()
+        SHA384::hash(message).to_vec()
     }
 
     fn padding_scheme(&self) -> rsa::PaddingScheme {
-        rsa::PaddingScheme::new_pss::<hmac_sha384::Hash, _>(rand::thread_rng())
+        rsa::PaddingScheme::new_pss::<SHA384>()
     }
 
     fn public_key(&self) -> &RSAPublicKey {
