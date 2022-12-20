@@ -6,7 +6,7 @@ use crate::jwk::Jwk;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct JWTHeader {
     #[serde(rename = "alg")]
-    pub(crate) algorithm: String,
+    pub algorithm: String,
 
     #[serde(rename = "cty", default, skip_serializing_if = "Option::is_none")]
     pub(crate) content_type: Option<String>,
@@ -37,6 +37,10 @@ pub struct JWTHeader {
 
     #[serde(rename = "x5t#S256", default, skip_serializing_if = "Option::is_none")]
     pub certificate_sha256_thumbprint: Option<String>,
+
+    /// Custom claims
+    #[serde(flatten)]
+    pub custom: Option<serde_json::Value>,
 }
 
 impl Default for JWTHeader {
@@ -53,6 +57,7 @@ impl Default for JWTHeader {
             certificate_sha256_thumbprint: None,
             signature_type: Some("JWT".to_string()),
             critical: None,
+            custom: None,
         }
     }
 }
