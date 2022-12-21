@@ -98,14 +98,19 @@ impl TokenMetadata {
 impl Token {
     pub(crate) fn build<AuthenticationOrSignatureFn, CustomClaims: Serialize + DeserializeOwned>(
         jwt_header: &JWTHeader,
-        claims: JWTClaims<CustomClaims>,
+        claims: Option<JWTClaims<CustomClaims>>,
         authentication_or_signature_fn: AuthenticationOrSignatureFn,
     ) -> Result<String, Error>
     where
         AuthenticationOrSignatureFn: FnOnce(&str) -> Result<Vec<u8>, Error>,
     {
         let jwt_header_json = serde_json::to_string(&jwt_header)?;
-        let claims_json = serde_json::to_string(&claims)?;
+        // Supports absent claims. Replacing it by "" instead of "{}" which suits ACME request payloads
+        let claims_json = claims
+            .as_ref()
+            .map(serde_json::to_string)
+            .transpose()?
+            .unwrap_or_default();
         let authenticated = format!(
             "{}.{}",
             Base64UrlSafeNoPadding::encode_to_string(jwt_header_json)?,
