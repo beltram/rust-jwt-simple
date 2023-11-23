@@ -104,11 +104,11 @@ impl Token {
     where
         AuthenticationOrSignatureFn: FnOnce(&str) -> Result<Vec<u8>, Error>,
     {
-        let jwt_header_json = serde_json::to_string(&jwt_header)?;
+        let jwt_header_json = Self::serialize_to_json_string(&jwt_header)?;
         // Supports absent claims. Replacing it by "" instead of "{}" which suits ACME request payloads
         let claims_json = claims
             .as_ref()
-            .map(serde_json::to_string)
+            .map(Self::serialize_to_json_string)
             .transpose()?
             .unwrap_or_default();
         let authenticated = format!(
@@ -193,6 +193,20 @@ impl Token {
             &Base64UrlSafeNoPadding::decode_to_vec(jwt_header_b64, None)?,
         )?;
         Ok(TokenMetadata { jwt_header })
+    }
+
+    #[cfg(not(feature = "python"))]
+    fn serialize_to_json_string<T: ?Sized + Serialize>(value: &T) -> Result<String, Error> {
+        Ok(serde_json::to_string(value)?)
+    }
+
+    #[cfg(feature = "python")]
+    fn serialize_to_json_string<T: ?Sized + Serialize>(value: &T) -> Result<String, Error> {
+        let mut buf = vec![];
+        let python_fmt = serde_json_python_formatter::PythonFormatter::default();
+        let mut serializer = serde_json::Serializer::with_formatter(&mut buf, python_fmt);
+        value.serialize(&mut serializer)?;
+        Ok(String::from_utf8(buf)?)
     }
 }
 
